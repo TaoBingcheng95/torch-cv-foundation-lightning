@@ -23,5 +23,13 @@ scheduler:
   factor: 0.1
   patience: 10
 
+criterion:
+  _target_: src.loss.CEWithLogitsLoss
+  reduction: mean
+
+metrics:
+  _target_: src.metrics.ClassificationMetric
+  num_classes: 10
+
 # compile model for faster training with pytorch 2.0
 compile: false

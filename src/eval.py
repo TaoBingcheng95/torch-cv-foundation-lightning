@@ -72,7 +72,12 @@ def evaluate(cfg: DictConfig) -> Tuple[Dict[str, Any], Dict[str, Any]]:
         log_hyperparameters(object_dict)
 
     log.info("Starting testing!")
-    trainer.test(model=model, datamodule=datamodule, ckpt_path=cfg.ckpt_path)
+    try:
+        # 新版 PyTorch 推荐 weights_only=True（更安全，且避免 FutureWarning）
+        trainer.test(model=model, datamodule=datamodule, ckpt_path=cfg.ckpt_path, weights_only=True)
+    except Exception as e:
+        log.warning(f"Failed to load checkpoint with weights_only=True ({e}), retrying with weights_only=False")
+        trainer.test(model=model, datamodule=datamodule, ckpt_path=cfg.ckpt_path, weights_only=False)
 
     # for predictions use trainer.predict(...)
     # predictions = trainer.predict(model=model, dataloaders=dataloaders, ckpt_path=cfg.ckpt_path)
