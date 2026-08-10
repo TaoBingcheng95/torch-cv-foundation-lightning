@@ -25,9 +25,10 @@ model:
   optimizer:
     lr: 0.002
   net:
-    lin1_size: 128
-    lin2_size: 256
-    lin3_size: 64
+    conv1_channels: 16
+    conv2_channels: 32
+    fc1_size: 120
+    fc2_size: 84
   compile: false
 
 data:

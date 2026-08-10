@@ -1,13 +1,11 @@
 _target_: src.models.mnist_module.MNISTLitModule
 
 net:
-  _target_: src.models.components.simple_net.SimpleLeNet
-  input_channels: 1
-  input_size: 32 # MNIST 被 resize 到 32x32，匹配 LeNet 经典输入
-  conv1_channels: 6
-  conv2_channels: 16
-  fc1_size: 120
-  fc2_size: 84
+  _target_: src.models.components.simple_net.SimpleMLP
+  input_size: 1024 # MNIST 被 resize 到 32x32，匹配 MLP 经典输入
+  lin1_size: 256
+  lin2_size: 256
+  lin3_size: 256
   output_size: 10
 
 optimizer:

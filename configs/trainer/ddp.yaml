@@ -7,3 +7,5 @@ accelerator: gpu
 devices: 4
 num_nodes: 1
 sync_batchnorm: True
+# mixed precision for extra speed-up
+precision: 16-mixed
