@@ -2,7 +2,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import hydra
 import rootutils
-import torch
+# import torch
 import lightning as L
 from lightning import Callback, LightningDataModule, LightningModule, Trainer
 from lightning.pytorch.loggers import Logger

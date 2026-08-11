@@ -163,6 +163,7 @@ class ConfusionMatrix(Metric):
         )
 
 
+
 class ClassificationMetric(Metric):
     """
     分类任务指标计算层（torchmetrics Metric 子类）。
@@ -388,6 +389,7 @@ class ClassificationMetric(Metric):
             f"{self.__class__.__name__}(num_classes={self.num_classes}, "
             f"top_k={self.top_k}, total={self.cm.total})"
         )
+
 
 
 class SegmentationMetric(Metric):

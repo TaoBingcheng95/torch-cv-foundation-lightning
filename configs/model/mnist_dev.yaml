@@ -16,12 +16,13 @@ optimizer:
   lr: 0.001
   weight_decay: 0.0
 
+
 scheduler:
-  _target_: torch.optim.lr_scheduler.ReduceLROnPlateau
+  _target_: src.optimizers.schedulers.WarmupCosineScheduler
   _partial_: true
-  mode: min
-  factor: 0.1
-  patience: 10
+  total_epochs: ${trainer.max_epochs}
+  warmup_epochs: 5
+  eta_min: 1e-6
 
 criterion:
   _target_: src.loss.CEWithLogitsLoss
