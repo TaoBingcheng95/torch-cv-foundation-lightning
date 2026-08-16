@@ -28,7 +28,7 @@ criterion:
   reduction: mean
 
 metrics:
-  _target_: src.metrics.ClassificationMetric
+  _target_: src.metrics.MulticlassClassificationMetric
   num_classes: 10
 
 # compile model for faster training with pytorch 2.0

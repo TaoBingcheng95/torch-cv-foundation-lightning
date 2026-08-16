@@ -2,13 +2,7 @@ from typing import Any, Dict, Tuple, Optional
 
 import torch
 from lightning import LightningModule
-from torchmetrics import Metric, MaxMetric, MeanMetric, MetricCollection
-from torchmetrics.classification import (
-    MulticlassAccuracy,
-    MulticlassF1Score,
-    MulticlassPrecision,
-    MulticlassRecall,
-)
+from torchmetrics import Metric, MaxMetric, MeanMetric
 
 
 class MNISTLitModule(LightningModule):
@@ -43,7 +37,6 @@ class MNISTLitModule(LightningModule):
     Docs:
         https://lightning.ai/docs/pytorch/latest/common/lightning_module.html
     """
-    NUM_CLASSES = 10
     def __init__(
         self,
         net: torch.nn.Module,
@@ -74,23 +67,15 @@ class MNISTLitModule(LightningModule):
         self.val_loss = MeanMetric()
         self.test_loss = MeanMetric()
 
+        # metrics 由 Hydra 配置注入（如 MulticlassClassificationMetric），
+        # 它本身已是 MetricCollection 子类，直接 clone + prefix 即可
         if metrics is not None:
-            # 自定义指标与原生指标行为约定已对齐（compute 返回 dict、支持 clone/reset），
-            # 用 MetricCollection 包装后与默认路径完全同构，共享 clone(prefix) 语义
-            _common = MetricCollection(metrics.clone())
+            self.val_metrics = metrics.clone(prefix="val/")
+            self.test_metrics = metrics.clone(prefix="test/")
         else:
-            # average="macro" 对类别不均衡更直观；micro 在多分类下恒等于 acc，无意义。
-            metric_kwargs = dict(num_classes=self.NUM_CLASSES, average="macro")
-            # 默认路径：MetricCollection 包装原生 torchmetrics 指标
-            # 每个子指标 compute() 返回 tensor，log_dict 自动记录
-            _common = MetricCollection({
-                "acc":       MulticlassAccuracy(**metric_kwargs),
-                "f1":        MulticlassF1Score(**metric_kwargs),
-                "precision": MulticlassPrecision(**metric_kwargs),
-                "recall":    MulticlassRecall(**metric_kwargs),
-            })
-        self.val_metrics = _common.clone(prefix="val/")
-        self.test_metrics = _common.clone(prefix="test/")
+            raise ValueError(
+                "metrics must be provided via config (e.g. MulticlassClassificationMetric)."
+            )
 
         # for tracking best so far validation accuracy
         self.val_acc_best = MaxMetric()
@@ -187,8 +172,6 @@ class MNISTLitModule(LightningModule):
         self.val_loss(loss)
         self.val_metrics.update(logits, targets)
         self.log("val/loss", self.val_loss, on_step=False, on_epoch=True, prog_bar=True)
-        # 自定义指标 compute() 返回 dict，Lightning 的 log_dict(MetricCollection) 只接受
-        # 逐子指标 tensor 返回值，因此统一推迟到 epoch 末记录 compute() 的 dict 结果
 
     def on_validation_epoch_end(self) -> None:
         "Lightning hook that is called when a validation epoch ends."
@@ -196,7 +179,6 @@ class MNISTLitModule(LightningModule):
         val_results = self.val_metrics.compute()
         self.log_dict(val_results, prog_bar=False)
         acc = val_results.get("val/acc", 0.0)
-        # 记录的是纯数值，Lightning 不会自动 reset 集合，需手动重置避免跨 epoch 累加
         self.val_metrics.reset()
         self.val_acc_best(acc)
         self.log("val/acc_best", self.val_acc_best.compute(), sync_dist=True, prog_bar=True)
@@ -214,7 +196,6 @@ class MNISTLitModule(LightningModule):
         self.test_loss(loss)
         self.test_metrics.update(logits, targets)
         self.log("test/loss", self.test_loss, on_step=False, on_epoch=True, prog_bar=True)
-        # 与 val 同理，推迟到 epoch 末记录 compute() 的 dict 结果
 
     def on_test_epoch_end(self) -> None:
         """Lightning hook that is called when a test epoch ends."""
@@ -252,4 +233,5 @@ class MNISTLitModule(LightningModule):
 
 
 if __name__ == "__main__":
-    _ = MNISTLitModule(None, None, None, None)
+    from src.metrics import MulticlassClassificationMetric
+    _ = MNISTLitModule(None, None, None, None, MulticlassClassificationMetric(num_classes=10))
