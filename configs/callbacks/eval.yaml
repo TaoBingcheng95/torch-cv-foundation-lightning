@@ -1,0 +1,15 @@
+defaults:
+  - model_checkpoint
+  - early_stopping
+  - _self_
+
+model_checkpoint:
+  monitor: "val/acc"
+  mode: "max"
+  every_n_train_steps': 0
+  every_n_epochs: 1
+  train_time_interval: None
+
+early_stopping:
+  monitor: "val/acc"
+  mode: "max"

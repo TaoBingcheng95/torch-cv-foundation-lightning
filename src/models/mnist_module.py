@@ -54,9 +54,16 @@ class MNISTLitModule(LightningModule):
         """
         super().__init__()
 
-        # this line allows to access init params with 'self.hparams' attribute
-        # also ensures init params will be stored in ckpt
-        self.save_hyperparameters(logger=False, ignore=["metrics", "criterion"])
+        # 让 optimizer/scheduler 留在 self.hparams 内存中（configure_optimizers
+        # 需要从 self.hparams.optimizer 取 functools.partial 来构造 optimizer）。
+        # net/criterion/metrics 是 nn.Module，不进 hparams；
+        # 落盘时由 on_save_checkpoint 把不可 pickle 的 optimizer/scheduler 从
+        # ckpt 中清掉，保证 torch.load(weights_only=True) 友好。
+        # 加载方（load_from_checkpoint）需按官方推荐方式显式补传这些参数。
+        self.save_hyperparameters(
+            logger=False,
+            ignore=["net", "criterion", "metrics"],
+        )
 
         self.net = net
 
@@ -73,9 +80,11 @@ class MNISTLitModule(LightningModule):
             self.val_metrics = metrics.clone(prefix="val/")
             self.test_metrics = metrics.clone(prefix="test/")
         else:
-            raise ValueError(
-                "metrics must be provided via config (e.g. MulticlassClassificationMetric)."
-            )
+            self.val_metrics = None
+            self.test_metrics = None
+            # raise ValueError(
+            #     "metrics must be provided via config (e.g. MulticlassClassificationMetric)."
+            # )
 
         # for tracking best so far validation accuracy
         self.val_acc_best = MaxMetric()
@@ -204,13 +213,17 @@ class MNISTLitModule(LightningModule):
         self.test_metrics.reset()
 
     def on_save_checkpoint(self, checkpoint: Dict[str, Any]) -> None:
-        """Sanitize ``hyper_parameters`` so the checkpoint is loadable with ``torch.load(weights_only=True)``.
+        """在落盘前清理 hyper_parameters，保证 ckpt 可被 ``torch.load(weights_only=True)`` 加载。
 
-        The in-memory ``self.hparams`` is left untouched (``configure_optimizers`` still needs
-        ``optimizer``/``scheduler`` at runtime). Only the copy written to disk is cleaned:
-        ``net`` is already stored in ``state_dict``, and ``optimizer``/``scheduler`` are
-        ``functools.partial`` objects that get re-created from the Hydra config on every run.
-        Dropping them avoids the non-serializable globals that force ``weights_only=False``.
+        内存中的 ``self.hparams`` 不动（``configure_optimizers`` 仍需在运行时从
+        ``self.hparams.optimizer``/``scheduler`` 取 functools.partial）。仅清理落盘副本：
+        - ``net`` 已在 ``state_dict`` 中（且 __init__ 里 ignore，此处为冗余清理，no-op）
+        - ``optimizer``/``scheduler`` 是 Hydra 注入的 functools.partial，
+          不在 ``weights_only=True`` 的默认 safe globals 中，必须从 ckpt 移除
+        - ``criterion`` 同理已 ignore，此处为冗余清理
+
+        加载方需用 ``MNISTLitModule.load_from_checkpoint(path, net=..., optimizer=..., ...)``
+        显式补传这些参数（参见 src/infer.py 的实现）。
         """
         super().on_save_checkpoint(checkpoint)
         hp = checkpoint.get("hyper_parameters")

@@ -9,7 +9,7 @@ net:
   output_size: 10
 
 optimizer:
-  _target_: torch.optim.Adam
+  _target_: torch.optim.AdamW
   _partial_: true
   lr: 0.001
   weight_decay: 0.0
@@ -20,6 +20,14 @@ scheduler:
   mode: min
   factor: 0.1
   patience: 10
+
+criterion:
+  _target_: src.loss.CEWithLogitsLoss
+  reduction: mean
+
+metrics:
+  _target_: src.metrics.MulticlassClassificationMetric
+  num_classes: 10
 
 # compile model for faster training with pytorch 2.0
 compile: false
