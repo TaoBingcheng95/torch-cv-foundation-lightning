@@ -73,7 +73,7 @@ def test_train_ddp_sim(cfg_train: DictConfig) -> None:
         cfg_train.trainer.max_epochs = 2
         cfg_train.trainer.accelerator = "cpu"
         cfg_train.trainer.devices = 2
-        cfg_train.trainer.strategy = "ddp_spawn"
+        cfg_train.trainer.strategy = "ddp"
     train(cfg_train)
 
 
