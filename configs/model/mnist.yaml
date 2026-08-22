@@ -28,7 +28,7 @@ criterion:
   reduction: mean
 
 metrics:
-  _target_: src.metrics.metrics_dev.ClassificationMetric # src.metrics.general.MulticlassClassificationMetric
+  _target_: src.metrics.metrics_dev.ClassificationMetric
   num_classes: 10
   average: 'macro'
 

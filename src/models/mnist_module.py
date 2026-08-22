@@ -2,7 +2,7 @@ from typing import Any, Dict, Tuple, Optional
 
 import torch
 from lightning import LightningModule
-# from torchmetrics import Metric, MaxMetric, MeanMetric
+from torchmetrics import Metric, MaxMetric, MeanMetric
 
 
 class MNISTLitModule(LightningModule):
