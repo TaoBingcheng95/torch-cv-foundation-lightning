@@ -178,6 +178,7 @@ class ConfusionMatrixView:
         return self._matrix
 
 
+
 class _CMAdapter:
     """
     混淆矩阵状态适配器（轻量桥接对象）。
@@ -196,6 +197,7 @@ class _CMAdapter:
     def compute(self) -> torch.Tensor:
         """返回原始混淆矩阵 (num_classes, num_classes)，int64 张量。"""
         return self._metric.matrix
+
 
 
 class ClassificationMetric(Metric):

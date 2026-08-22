@@ -2,7 +2,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import hydra
 import rootutils
-# import torch
+import torch
 import lightning as L
 from lightning import Callback, LightningDataModule, LightningModule, Trainer
 from lightning.pytorch.loggers import Logger
@@ -37,6 +37,8 @@ from src.utils import (
 )
 
 log = RankedLogger(__name__, rank_zero_only=True)
+
+torch.set_float32_matmul_precision("medium")
 
 
 @task_wrapper

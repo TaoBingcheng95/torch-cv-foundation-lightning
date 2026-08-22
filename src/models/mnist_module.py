@@ -2,7 +2,7 @@ from typing import Any, Dict, Tuple, Optional
 
 import torch
 from lightning import LightningModule
-from torchmetrics import Metric, MaxMetric, MeanMetric
+# from torchmetrics import Metric, MaxMetric, MeanMetric
 
 
 class MNISTLitModule(LightningModule):
@@ -80,11 +80,11 @@ class MNISTLitModule(LightningModule):
             self.val_metrics = metrics.clone(prefix="val/")
             self.test_metrics = metrics.clone(prefix="test/")
         else:
-            self.val_metrics = None
-            self.test_metrics = None
-            # raise ValueError(
-            #     "metrics must be provided via config (e.g. MulticlassClassificationMetric)."
-            # )
+            # self.val_metrics = None
+            # self.test_metrics = None
+            raise ValueError(
+                "metrics must be provided via config (e.g. MulticlassClassificationMetric)."
+            )
 
         # for tracking best so far validation accuracy
         self.val_acc_best = MaxMetric()

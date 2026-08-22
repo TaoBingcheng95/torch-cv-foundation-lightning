@@ -11,7 +11,8 @@
 
 使用建议：
     cm 不作为 MetricCollection 成员（避免与标量指标混在一起 log_dict），
-    而是作为独立属性 self.cm 管理，update/reset/clone/to 显式委托。
+    而是作为独立属性 self.cm 管理，update/reset/clone 显式委托，
+    设备迁移通过重写 _apply 钩子同步（保证 Lightning 调用 .to(device) 时 cm 一同迁移）。
     推荐定义方式：
 
         self.val_metric = MulticlassClassificationMetric(
@@ -118,10 +119,14 @@ class BinaryClassificationMetric(MetricCollection):
         object.__setattr__(new_collection, 'cm', copy.deepcopy(self.cm))
         return new_collection
 
-    def to(self, *args, **kwargs):
-        """移动指标到指定设备，同步移动混淆矩阵。"""
-        super().to(*args, **kwargs)
-        object.__setattr__(self, 'cm', self.cm.to(*args, **kwargs))
+    def _apply(self, fn, exclude=None):
+        """设备/类型迁移钩子（to/cuda/cpu/float 等均经由此方法），同步迁移混淆矩阵。
+
+        cm 通过 object.__setattr__ 挂载，未注册为子模块，
+        外层 nn.Module.to(device) 递归调用子模块 _apply 时不会自动迁移 cm，需在此显式处理。
+        """
+        super()._apply(fn)
+        object.__setattr__(self, 'cm', self.cm._apply(fn))
         return self
 
     @property
@@ -216,10 +221,14 @@ class MulticlassClassificationMetric(MetricCollection):
         object.__setattr__(new_collection, 'cm', copy.deepcopy(self.cm))
         return new_collection
 
-    def to(self, *args, **kwargs):
-        """移动指标到指定设备，同步移动混淆矩阵。"""
-        super().to(*args, **kwargs)
-        object.__setattr__(self, 'cm', self.cm.to(*args, **kwargs))
+    def _apply(self, fn, exclude=None):
+        """设备/类型迁移钩子（to/cuda/cpu/float 等均经由此方法），同步迁移混淆矩阵。
+
+        cm 通过 object.__setattr__ 挂载，未注册为子模块，
+        外层 nn.Module.to(device) 递归调用子模块 _apply 时不会自动迁移 cm，需在此显式处理。
+        """
+        super()._apply(fn)
+        object.__setattr__(self, 'cm', self.cm._apply(fn))
         return self
 
     @property
@@ -302,10 +311,14 @@ class BinarySegmentationMetric(MetricCollection):
         object.__setattr__(new_collection, 'cm', copy.deepcopy(self.cm))
         return new_collection
 
-    def to(self, *args, **kwargs):
-        """移动指标到指定设备，同步移动混淆矩阵。"""
-        super().to(*args, **kwargs)
-        object.__setattr__(self, 'cm', self.cm.to(*args, **kwargs))
+    def _apply(self, fn, exclude=None):
+        """设备/类型迁移钩子（to/cuda/cpu/float 等均经由此方法），同步迁移混淆矩阵。
+
+        cm 通过 object.__setattr__ 挂载，未注册为子模块，
+        外层 nn.Module.to(device) 递归调用子模块 _apply 时不会自动迁移 cm，需在此显式处理。
+        """
+        super()._apply(fn)
+        object.__setattr__(self, 'cm', self.cm._apply(fn))
         return self
 
     @property
@@ -427,10 +440,14 @@ class MulticlassSegmentationMetric(MetricCollection):
         object.__setattr__(new_collection, 'cm', copy.deepcopy(self.cm))
         return new_collection
 
-    def to(self, *args, **kwargs):
-        """移动指标到指定设备，同步移动混淆矩阵。"""
-        super().to(*args, **kwargs)
-        object.__setattr__(self, 'cm', self.cm.to(*args, **kwargs))
+    def _apply(self, fn, exclude=None):
+        """设备/类型迁移钩子（to/cuda/cpu/float 等均经由此方法），同步迁移混淆矩阵。
+
+        cm 通过 object.__setattr__ 挂载，未注册为子模块，
+        外层 nn.Module.to(device) 递归调用子模块 _apply 时不会自动迁移 cm，需在此显式处理。
+        """
+        super()._apply(fn)
+        object.__setattr__(self, 'cm', self.cm._apply(fn))
         return self
 
     @property
