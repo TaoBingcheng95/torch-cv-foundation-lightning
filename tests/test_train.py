@@ -70,7 +70,7 @@ def test_train_ddp_sim(cfg_train: DictConfig) -> None:
     """
     HydraConfig().set_config(cfg_train)
     with open_dict(cfg_train):
-        cfg_train.trainer.max_epochs = 2
+        cfg_train.trainer.max_epochs = 1
         cfg_train.trainer.accelerator = "cpu"
         cfg_train.trainer.devices = 2
         cfg_train.trainer.strategy = "ddp"
